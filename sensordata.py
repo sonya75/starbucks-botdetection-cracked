@@ -70,6 +70,7 @@ class BotDetector:
         self.encryptionseed1=None
         self.encryptionseed2=None
         self.encryptionkey=None
+        self.encryptionroundcount=None
         self.headernameprefix=None
         self.plugins=[ -482629523, 916307581, 1078363890 ]
         self.consoleproperties='assert\x00clear\x00context\x00count\x00countReset\x00debug\x00dir\x00dirxml\x00error\x00group\x00groupCollapsed\x00groupEnd\x00info\x00log\x00memory\x00profile\x00profileEnd\x00table\x00time\x00timeEnd\x00timeLog\x00timeStamp\x00trace\x00warn'
@@ -124,6 +125,8 @@ class BotDetector:
         prfunc=[i for i in range(0,len(vdb)) if re.search("\..\..;",vdb[i])][0]
         afunc=[i for i in range(0,len(vdb)) if vdb[i].count(";A(")==1][0]
         mfunc=[i for i in range(0,len(vdb)) if "(-" in vdb[i]][0]
+        lsfunc=[i for i in range(0,len(vdb)) if "<<" in vdb[i]][0]
+        pcfunc=[i for i in range(0,len(vdb)) if "%" in vdb[i]][0]
         vdbn=[sum(int(q) for q in re.findall("\..([1-3])\(",p)) for p in vdb]
         lvals=[]
         j=int(enf)
@@ -159,12 +162,44 @@ class BotDetector:
                 j+=vdbn[s]
         if len(enck)<4:
             raise Exception("Failed to extract encryption seed")
+        gate=[True,True]
+        ls=0
+        while True:
+            [g,s]=fns[g][ord(k[j])]
+            j+=1
+            if vdbn[s]>=3 and "if" in vdb[s]:
+                if len(gate)==0: raise Exception("Unknown if")
+                l=gate.pop(0)
+                if "if(!" in vdb[s]: l=not l
+                if l:
+                    if vdbn[s]==3:
+                        j,g=ord(k[j])<<8|ord(k[j+1]),ord(k[j+2])
+                    else:
+                        j,g=ord(k[j])<<16|ord(k[j+1])<<8|ord(k[j+2]),ord(k[j+3])
+                else:
+                    j+=vdbn[s]
+            elif vdbn[s]==3:
+                p=(j+3,g)
+                j,g=ord(k[j])<<8|ord(k[j+1]),ord(k[j+2])
+            elif vdbn[s]==4:
+                p=(j+4,g)
+                j,g=ord(k[j])<<16|ord(k[j+1])<<8|ord(k[j+2]),ord(k[j+3])
+            elif s==prfunc:
+                j=p[0]
+                g=p[1]
+            elif s==lsfunc:
+                ls+=1
+            elif s==pcfunc:
+                break
+            else:
+                j+=vdbn[s]
+        self.encryptionroundcount=ls/32
         self.encryptionseed1=enck
         self.encryptionseed2=encs
     def encode(self,data):
         iv1=random.getrandbits(32)
         iv2=random.getrandbits(32)
-        data=encrypt(self.encryptionkey,data,iv1,iv2,self.encryptionseed1,self.encryptionseed2)
+        data=encrypt(self.encryptionkey,data,iv1,iv2,self.encryptionseed1,self.encryptionseed2,self.encryptionroundcount)
         data="".join(chr(p) for p in data)
         iv=[iv1>>24,iv1>>16&255,iv1>>8&255,iv1&255,iv2>>24,iv2>>16&255,iv2>>8&255,iv2&255]
         iv="".join(chr(p) for p in iv)
@@ -173,7 +208,7 @@ class BotDetector:
         data=base64decode(data,self.alphabet)
         iv1=struct.unpack(">I",data[:4])[0]
         iv2=struct.unpack(">I",data[4:8])[0]
-        data=encrypt(self.encryptionkey,[ord(data[i]) for i in range(8,len(data))],iv1,iv2,self.encryptionseed1,self.encryptionseed2)
+        data=encrypt(self.encryptionkey,[ord(data[i]) for i in range(8,len(data))],iv1,iv2,self.encryptionseed1,self.encryptionseed2,self.encryptionroundcount)
         return data
     def generateevents(self):
         x=int(time.time()*1000)
