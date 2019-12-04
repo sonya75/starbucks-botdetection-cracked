@@ -92,11 +92,11 @@ class BotDetector:
         funcstr=re.search("function a\(b\)({.*?)\n",x).group(1)
         funcstr=funcstr[:funcstr.rfind("}")]
         self.scriptdata={"length":len(funcstr),"whitespace":len(re.findall('\s',funcstr)),"punctuators":len(re.findall('[.{([,;=/]',funcstr))}
-        m=re.search(" H=(.*?);",x).group(1)
+        m=re.search(" H=(.*?\]);",x).group(1)
         mm=eval(m)
         m=mm.index("o_0")
         m=chr(m>>8)+chr(m&255)
-        k=re.search("bo=M\(\"(.*?)\"",x).group(1)
+        k=re.search("=M\(\"(.*?)\"",x).group(1)
         k=k+"="*((-len(k))%4)
         k=base64.urlsafe_b64decode(k.encode('ascii'))
         i=0
@@ -118,7 +118,7 @@ class BotDetector:
         fns=json.loads(re.search("var J=(.*?);",funcstr).group(1))
         ls=eval(re.search("var L=(.*?);",funcstr).group(1))
         enf,eng=re.findall("{.:([0-9]*?),.:([0-9]*?),",bm)[3]
-        v=funcstr.find("var dB=")
+        v=funcstr.rfind("[function(")
         vdb=funcstr[v:funcstr.find("];function",v)]
         vdb=vdb.split(",function(")
         lfunc=[i for i in range(0,len(vdb)) if "=L[" in vdb[i]][0]
@@ -162,7 +162,7 @@ class BotDetector:
                 j+=vdbn[s]
         if len(enck)<4:
             raise Exception("Failed to extract encryption seed")
-        gate=[True,True]
+        gate=[True,False]
         ls=0
         while True:
             [g,s]=fns[g][ord(k[j])]
