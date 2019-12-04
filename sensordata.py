@@ -144,8 +144,12 @@ class BotDetector:
                 j=p[0]
                 g=p[1]
             elif vdbn[s]==3:
-                p=(j+3,g)
-                j,g=ord(k[j])<<8|ord(k[j+1]),ord(k[j+2])
+                if re.search("\..3\(",vdb[s]):
+                    lvals.append(ord(k[j])<<16|ord(k[j+1])<<8|ord(k[j+2]))
+                    j+=3
+                else:
+                    p=(j+3,g)
+                    j,g=ord(k[j])<<8|ord(k[j+1]),ord(k[j+2])
             elif vdbn[s]==4:
                 p=(j+4,g)
                 j,g=ord(k[j])<<16|ord(k[j+1])<<8|ord(k[j+2]),ord(k[j+3])
@@ -179,7 +183,7 @@ class BotDetector:
                         j,g=ord(k[j])<<16|ord(k[j+1])<<8|ord(k[j+2]),ord(k[j+3])
                 else:
                     j+=vdbn[s]
-            elif vdbn[s]==3:
+            elif vdbn[s]==3 and (not re.search("\..3\(",vdb[s])):
                 p=(j+3,g)
                 j,g=ord(k[j])<<8|ord(k[j+1]),ord(k[j+2])
             elif vdbn[s]==4:
