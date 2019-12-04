@@ -115,6 +115,7 @@ class BotDetector:
         l=re.search("initCustomEvent\(.*?\[\"(.*?)\",\"(.*?)\".*?,.*?,(.*?\])",x)
         self.uuidtoken,self.alphabet=l.group(1),l.group(2)
         self.encryptionkey=eval(l.group(3))
+        self.encryptionkey=[int(r) for r in self.encryptionkey]
         bm=re.search("var K=(.*?);",funcstr).group(1)
         fns=json.loads(re.search("var J=(.*?);",funcstr).group(1))
         ls=eval(re.search("var L=(.*?);",funcstr).group(1))
