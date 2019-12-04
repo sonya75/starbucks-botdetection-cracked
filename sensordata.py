@@ -200,8 +200,8 @@ class BotDetector:
             else:
                 j+=vdbn[s]
         self.encryptionroundcount=ls/32
-        self.encryptionseed1=enck
-        self.encryptionseed2=encs
+        self.encryptionseed1=[int(r) for r in enck]
+        self.encryptionseed2=int(encs)
     def encode(self,data):
         iv1=random.getrandbits(32)
         iv2=random.getrandbits(32)
