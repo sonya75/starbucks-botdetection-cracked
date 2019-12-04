@@ -108,6 +108,7 @@ class BotDetector:
             l=[ord(k[s])<<8|ord(k[s+1]) for s in range(max(0,j-100),j+100)]
             l=[mm[p] for p in l if p<len(mm)]
             l=[p for p in l if len(p)>118]
+            l=list(set(l))
             if len(l)<2: continue
             self.bundleseed=decodestring(l[0],l[1])
             break
