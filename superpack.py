@@ -75,7 +75,6 @@ class Encoder:
 		self.stringhist=[(p,((len(p) + 1) * self.stringhist[p]) - (len(p) + 2 + self.stringhist[p])) for p in self.stringhist]
 		self.stringhist=[(-q,p) for (p,q) in self.stringhist if q>0]
 		self.stringhist=[p for (q,p) in sorted(self.stringhist)]
-#		self.stringhist=['password','INPUT','username','BUTTON','probably','23127127','03130','Google Inc.','LABEL','HTML' ]
 		q=self.stringhist
 		if len(self.stringhist)>255:
 			self.stringhist=self.stringhist[:255]
@@ -97,6 +96,8 @@ class Encoder:
 			self.output.append(TypeTags.NULL)
 		elif x==UNDEFINED:
 			self.output.append(TypeTags.UNDEFINED)
+		elif x==DEFAULT:
+			self.output+=[TypeTags.EXTENSION,0,TypeTags.UNDEFINED]
 		elif x==INFINITY:
 			self.output+=[TypeTags.FLOAT32,0x7F,0x80,0x00,0x00]
 		elif x==NEGINFINITY:
@@ -245,7 +246,10 @@ class NAN: pass
 class INFINITY: pass
 class NEGINFINITY: pass
 
-__all__=['NULL','UNDEFINED','NAN','INFINITY','NEGINFINITY','Encoder']
+# not using extensions unnecessarily for this
+class DEFAULT: pass
+
+__all__=['NULL','UNDEFINED','NAN','INFINITY','NEGINFINITY','DEFAULT','Encoder']
 
 def test():
 	import json

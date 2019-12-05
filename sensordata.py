@@ -17,6 +17,14 @@ def simplehash(x):
         return -(4294967296-int(y))
     else:
         return int(y)
+def mhash(x,z):
+    z='"'+z+'"'
+    x=x&4294967295
+    for p in z:
+        x=x^ord(p)
+        x=x+((x<<1)+(x<<4)+(x<<7)+(x<<8)+(x<<24))
+        x=x&4294967295
+    return "{:08x}".format(x)
 def base36(u):
     if u<0:
         return "-"+base36(-u)
@@ -61,6 +69,10 @@ FIRMWARE_KEY="z"
 PAYLOAD_KEY="a"
 class BotDetector:
     def __init__(self):
+        self.mousebuttoneventslimit=30
+        self.recentmousemoveeventslimit=50
+        self.throttledmousemoveeventslimit=50
+        self.throttledmousemoveeventtimeout=120
         self.scriptdata=None
         self.inittime=int(time.time()*1000)
         self.timestamps=[self.inittime+random.randint(40,80),0,random.randint(500,800),random.randint(1000,1500)]
@@ -74,9 +86,10 @@ class BotDetector:
         self.headernameprefix=None
         self.plugins=[ -482629523, 916307581, 1078363890 ]
         self.consoleproperties='assert\x00clear\x00context\x00count\x00countReset\x00debug\x00dir\x00dirxml\x00error\x00group\x00groupCollapsed\x00groupEnd\x00info\x00log\x00memory\x00profile\x00profileEnd\x00table\x00time\x00timeEnd\x00timeLog\x00timeStamp\x00trace\x00warn'
-        self.fonts=[False,True,False,False,False,False,False,True,False,True,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,True,False,True,False,True,False,False,True,False,True,False,False,False,False,True,True,False,False]
+        self.fonts=[False,True,False,False,False,False,False,True,False,True,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,True,False,True,False,True,False,False,False,False,False,False,False,False,False,True,True,False,False]
         self.mathproperties=['abs','acos','acosh','asin','asinh','atan','atanh','atan2','ceil','cbrt','expm1','clz32','cos','cosh','exp','floor','fround','hypot','imul','log','log1p','log2','log10','max','min','pow','random','round','sign','sin','sinh','sqrt','tan','tanh','trunc','E','LN10','LN2','LOG10E','LOG2E','PI','SQRT1_2','SQRT2']
         self.keyevents=[]
+        self.keysequencenumber=0
         self.mousebuttonevents=[]
         self.animationframetimes=[]
         k=random.randint(820000,900000)
@@ -85,9 +98,10 @@ class BotDetector:
             k+=random.randint(16660,16700)
         self.visibilityevents=[]
         self.mousemoveevents={"recent":[],"throttled":[]}
-        self.mediadeviceids=["communications",os.urandom(32).encode('hex'),os.urandom(32).encode('hex'),"communications",os.urandom(32).encode('hex')]
-        self.browserdata={"global":{"innerHeight":969,"innerWidth":1920,"outerHeight":1040,"outerWidth":1920,"screenX":0,"screenY":0,"isSecureContext":True,"devicePixelRatio":1},"screen":{"height":1080,"width":1920,"availHeight":1040,"availWidth":1920,"pixelDepth":24,"colorDepth":24},"navigator":{"appCodeName":"Mozilla","appName":"Netscape","appVersion":"5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36","buildID":None,"cpuClass":None,"hardwareConcurrency":12,"maxTouchPoints":0,"platform":"Win32","product":"Gecko","productSub":"20030107","oscpu":None,"userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36","vendor":"Google Inc.","vendorSub":"","doNotTrack":None,"webdriver":False},"operaVersion":None,"toolbar":True,"locationbar":True}
-        self.devicedata={"parameters":{"antialias":True,"maxAnisotropy":16,"dimensions":["11","11024","3276732767"],"params":{"alphaBits":8,"blueBits":8,"greenBits":8,"redBits":8,"depthBits":24,"maxCombinedTextureImageUnits":32,"maxCubeMapTextureSize":16384,"maxFragmentUniformVectors":1024,"maxRenderbufferSize":16384,"maxTextureImageUnits":16,"maxTextureSize":16384,"maxVaryingVectors":30,"maxVertexAttribs":16,"maxVertexTextureImageUnits":16,"maxVertexUniformVectors":4096,"renderer":"WebKit WebGL","shadingLanguageVersion":"WebGL GLSL ES 1.0 (OpenGL ES GLSL ES 1.0 Chromium)","stencilBits":0,"vendor":"WebKit","version":"WebGL 1.0 (OpenGL ES 2.0 Chromium)"},"debugInfo":{"vendor":"Google Inc.","renderer":"ANGLE (Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0)"}},"shaderPrecisions":["23127127","23127127","23127127","23127127","23127127","23127127","03130","03130","03130","03130","03130","03130"],"supportedExtensions":["ANGLE_instanced_arrays","EXT_blend_minmax","EXT_color_buffer_half_float","EXT_disjoint_timer_query","EXT_float_blend","EXT_frag_depth","EXT_shader_texture_lod","EXT_texture_filter_anisotropic","WEBKIT_EXT_texture_filter_anisotropic","EXT_sRGB","KHR_parallel_shader_compile","OES_element_index_uint","OES_standard_derivatives","OES_texture_float","OES_texture_float_linear","OES_texture_half_float","OES_texture_half_float_linear","OES_vertex_array_object","WEBGL_color_buffer_float","WEBGL_compressed_texture_s3tc","WEBKIT_WEBGL_compressed_texture_s3tc","WEBGL_compressed_texture_s3tc_srgb","WEBGL_debug_renderer_info","WEBGL_debug_shaders","WEBGL_depth_texture","WEBKIT_WEBGL_depth_texture","WEBGL_draw_buffers","WEBGL_lose_context","WEBKIT_WEBGL_lose_context"],"contextProperties":-368668372}
+        self.mousesequencenumber=0
+        self.mediadeviceids=["communications",os.urandom(32).encode('hex'),"communications",os.urandom(32).encode('hex'),os.urandom(32).encode('hex'),os.urandom(32).encode('hex'),os.urandom(32).encode('hex'),os.urandom(32).encode('hex')]
+        self.browserdata={"global":{"innerHeight":1297,"innerWidth":2560,"outerHeight":1400,"outerWidth":2560,"screenX":0,"screenY":0,"isSecureContext":True,"devicePixelRatio":1},"screen":{"height":1440,"width":2560,"availHeight":1400,"availWidth":2560,"pixelDepth":24,"colorDepth":24},"navigator":{"appCodeName":"Mozilla","appName":"Netscape","appVersion":"5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36","buildID":None,"cpuClass":None,"hardwareConcurrency":24,"maxTouchPoints":0,"platform":"Win32","product":"Gecko","productSub":"20030107","oscpu":None,"userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36","vendor":"Google Inc.","vendorSub":"","doNotTrack":None,"webdriver":False},"operaVersion":None,"toolbar":True,"locationbar":True}
+        self.devicedata={"parameters":{"antialias":True,"maxAnisotropy":16,"dimensions":["11","11024","3276732767"],"params":{"alphaBits":8,"blueBits":8,"greenBits":8,"redBits":8,"depthBits":24,"maxCombinedTextureImageUnits":32,"maxCubeMapTextureSize":16384,"maxFragmentUniformVectors":1024,"maxRenderbufferSize":16384,"maxTextureImageUnits":16,"maxTextureSize":16384,"maxVaryingVectors":30,"maxVertexAttribs":16,"maxVertexTextureImageUnits":16,"maxVertexUniformVectors":4096,"renderer":"WebKit WebGL","shadingLanguageVersion":"WebGL GLSL ES 1.0 (OpenGL ES GLSL ES 1.0 Chromium)","stencilBits":0,"vendor":"WebKit","version":"WebGL 1.0 (OpenGL ES 2.0 Chromium)"},"debugInfo":{"vendor":"Google Inc.","renderer":'ANGLE (Radeon RX Vega Direct3D11 vs_5_0 ps_5_0)'}},"shaderPrecisions":["23127127","23127127","23127127","23127127","23127127","23127127","03130","03130","03130","03130","03130","03130"],"supportedExtensions":["ANGLE_instanced_arrays","EXT_blend_minmax","EXT_color_buffer_half_float","EXT_disjoint_timer_query","EXT_float_blend","EXT_frag_depth","EXT_shader_texture_lod","EXT_texture_filter_anisotropic","WEBKIT_EXT_texture_filter_anisotropic","EXT_sRGB","KHR_parallel_shader_compile","OES_element_index_uint","OES_standard_derivatives","OES_texture_float","OES_texture_float_linear","OES_texture_half_float","OES_texture_half_float_linear","OES_vertex_array_object","WEBGL_color_buffer_float","WEBGL_compressed_texture_s3tc","WEBKIT_WEBGL_compressed_texture_s3tc","WEBGL_compressed_texture_s3tc_srgb","WEBGL_debug_renderer_info","WEBGL_debug_shaders","WEBGL_depth_texture","WEBKIT_WEBGL_depth_texture","WEBGL_draw_buffers","WEBGL_lose_context","WEBKIT_WEBGL_lose_context"],"contextProperties":-368668372}
     def processrawscript(self,x):
         funcstr=re.search("function a\(b\)({.*?)\n",x).group(1)
         funcstr=funcstr[:funcstr.rfind("}")]
@@ -218,21 +232,23 @@ class BotDetector:
         return data
     def generateevents(self):
         x=int(time.time()*1000)
-        maxbevents=random.randint(4,8)
         tl=self.lasteventtime
         startx=random.randint(300,1900)
         starty=random.randint(100,900)
         movex=1
         movey=1
-        while (x-tl)>1000 and maxbevents>0:
+        while (x-tl)>1000:
             s=random.randint(500,(x-tl)/2)
-            k=random.randint(5,10)
+            k=random.randint(15,30)
             tl+=s
-            while len(self.mousemoveevents["recent"])<32 and k>0:
-                tl+=random.randint(30,50)
-                self.mousemoveevents["recent"].append({"eventType":4,"timestamp":(tl-self.inittime),"x":startx,"y":starty})
-                startx+=random.randint(10,50)*movex
-                starty+=random.randint(10,50)*movey
+            while k>0:
+                tl+=random.randint(8,20)
+                tr=(tl-self.inittime)
+                self.mousemoveevents["recent"].append({"eventType":4,"timestamp":tr,"x":startx,"y":starty})
+                if len(self.mousemoveevents["throttled"])==0 or (tr-self.mousemoveevents["throttled"][-1]["timestamp"])>self.throttledmousemoveeventtimeout:
+                    self.mousemoveevents["throttled"].append({"eventType":4,"timestamp":tr,"x":startx,"y":starty})
+                startx+=random.randint(5,20)*movex
+                starty+=random.randint(5,20)*movey
                 if startx<300 or startx>1900:
                     movex=-movex
                     startx+=random.randint(10,50)*movex
@@ -241,7 +257,14 @@ class BotDetector:
                     starty+=random.randint(10,50)*movey
                 k-=1
             tl+=random.randint(10,50)
-            self.mousebuttonevents.append({"button":0,"eventType":3,"sequenceNumber":0,"target":{"id":'',"name":UNDEFINED,"nodeType":1,"tagName":'LABEL' },"timestamp":(tl-self.inittime),"x":startx,"y":starty})
+            if (x-tl)<1000 or random.randint(0,1)==1:
+                self.mousebuttonevents.append({"button":0,"eventType":1,"sequenceNumber":self.mousesequencenumber,"target":{"id":'',"name":'',"nodeType":1,"tagName":'BUTTON' },"timestamp":(tl-self.inittime),"x":startx,"y":starty})
+                tl+=random.randint(100,200)
+                self.mousebuttonevents.append({"button":0,"eventType":2,"sequenceNumber":self.mousesequencenumber,"target":{"id":'',"name":'',"nodeType":1,"tagName":'BUTTON' },"timestamp":(tl-self.inittime),"x":startx,"y":starty})
+                self.mousebuttonevents.append({"button":0,"eventType":3,"sequenceNumber":self.mousesequencenumber,"target":{"id":'',"name":'',"nodeType":1,"tagName":'BUTTON' },"timestamp":(tl-self.inittime),"x":startx,"y":starty})
+                self.mousesequencenumber+=1
+            else:
+                self.mousebuttonevents.append({"button":0,"eventType":3,"sequenceNumber":self.mousesequencenumber,"target":{"id":'',"name":UNDEFINED,"nodeType":1,"tagName":'LABEL' },"timestamp":(tl-self.inittime),"x":startx,"y":starty})
             startx+=random.randint(10,50)*movex
             starty+=random.randint(10,50)*movey
             if startx<300 or startx>1900:
@@ -250,7 +273,9 @@ class BotDetector:
             if starty<100 or starty>1000:
                 movey=-movey
                 starty+=random.randint(10,50)*movey
-            maxbevents-=1
+        self.mousebuttonevents=self.mousebuttonevents[-self.mousebuttoneventslimit:]
+        self.mousemoveevents["recent"]=self.mousemoveevents["recent"][-self.recentmousemoveeventslimit:]
+        self.mousemoveevents["throttled"]=self.mousemoveevents["throttled"][-self.throttledmousemoveeventslimit:]
     def generatedata(self):
         self.timestamps[-1]=int(time.time()*1000)-self.inittime
         signals=[]
@@ -271,7 +296,9 @@ class BotDetector:
         signals.append(["39",self.keyevents])
         signals.append(["42",{"hash":simplehash("\x00".join(self.mathproperties)),"mathProperties":self.mathproperties}])
         signals.append(["45",[simplehash(p) for p in self.mediadeviceids]])
-        signals.append(["47",{"mouseButtonEvents":self.mousebuttonevents,"mouseMoveEvents":self.mousemoveevents}])
+        mmoves=self.mousemoveevents.copy()
+        mmoves["throttled"]=[p for p in mmoves["throttled"] if p["timestamp"]<mmoves["recent"][0]["timestamp"]]
+        signals.append(["47",{"mouseButtonEvents":self.mousebuttonevents,"mouseMoveEvents":mmoves}])
         signals.append(["48",{"argumentsValue":'{"0":{"isTrusted":false}}',"hasArguments":True,"hasGlobal":False,"hasProcess":False}])
         signals.append(["51",{"avgAlpha":None,"avgBeta":None,"avgGamma":None,"avgInterval":0,"numOrientationEvents":1,"stdDevAlpha":0,"stdDevBeta":0,"stdDevGamma":0,"stdDevInterval":0}])
         signals.append(["57",{"statuscode":STORAGE_OK,"value":self.uuidtoken}])
@@ -288,9 +315,11 @@ class BotDetector:
         signals.append(["111",{"mpeg":"probably","x-mpeg":"","x-mpegurl":"","mp4":"maybe","mp4; codecs=mp4a.40.2":"probably","ogg; codecs=opus":"probably","ogg; codecs=speex":"","webm; codecs=vorbis":"probably","wav; codecs=\"0\"":"","wav; codecs=\"1\"":"probably","wav; codecs=\"2\"":"","wave":"","wave; codecs=0":"","wave; codecs=1":"","wave; codecs=2":"","3gpp; codecs=\"mp4v.20.8, samr\"":"","webm; codecs=\"vorbis,vp9\"":"probably","mp4; codecs=\"avc1.42c00d\"":"probably","webm; codecs=\"vp8, vorbis\"":"probably","ogg; codecs=theora":"probably","ogg; codecs=\"theora, speex\"":"","mp4; codecs=\"avc1.64001E, mp4a.40.2\"":"probably","mp4; codecs=\"mp4v.20.8, mp4a.40.2\"":"","mp4; codecs=bogus":"","mp2t; codecs=\"avc1.42E01E,mp4a.40.2\"":""}])
         signals.append(["112",{"events":self.visibilityevents,"finalState":True,"initialState":True,"visibilityEventCount":len(self.visibilityevents)}])
         signals.append(["113",self.devicedata])
-        signals.append(["116",[]])
-        signals.append(UNDEFINED)
+        signals.append(["116",DEFAULT])
         signals.append(["custom_ChromeConsole",False])
+        signals.append(["custom_webRTC",[]])
+        signals.append(["m",mhash(2166136261,"199"+"3w5e11264sg00"+self.uuidtoken[7:20])])  # Object.keys(window).length=199, parseInt('0xFFFFFFFFFFFFFBFF').toString(36)="3w5e11264sg00", 784054202+1382082059=2166136261
+        signals.append(["r","199"])
         data=Encoder().encode({"errors":[],"signals":signals},[["timestamp"],["channelCount","channelCountMod","channelInterpretation","fftSize","frequencyBinCount","maxChannelCount","maxDecibels","minDecibels","numberOfInputs","numberOfOutputs","sampleRate","smoothingTimeConstant","state"],["hash","max","min"],["audio/mpeg","audio/ogg","audio/wav","audio/wave","audio/webm"],["hasDefaultBrowserHelper","hasWidevinePlugin","plugins"],["dataFragment","hashcode"],["hasToSource","sourceHash","stringHash"],["computedStyleHash"],["background-repeat: round space;","border-image: none;","border-radius: 4px;","color: var(companyblue);","display: run-in;","filter: blur(2px);","flow-into: main-thread;","grid-columns: auto 1fr;","hyphens: auto;","inline-block: none;","mask-repeat: repeat-x;","mask: auto;","object-fit: contain;","overflow-scrolling: touch;","position: sticky;","resize: both;","tab-size: 4;","text-stroke: 2.0px;","user-select: none;","word-break: auto;"],["","-moz-","-ms-","-webkit-"],["-moz-osx-font-smoothing","-webkit-app-region","-webkit-text-size-adjust","animation","column-count","hyphens","justify-items","text-align-last","text-emphasis","text-orientation"],["caughtException","userAgentStyleHash"],[],["global"],["pageXOffset","pageYOffset"],["fonts","version"],["callable","documentElement","exists","falsy","nullish","type"],["foreignElements","links"],["innerText","tagName","xpath"],["d83d-dc69-d83c-dffb-200d-2764-fe0f-200d-d83d-dc69-d83c-dffe","d83d-dd2b","d83d-ddfe","d83d-decd","d83e-dd16","d83e-dd8b"],["alpha","colors"],["avg","count","volume"],["b","g","r"],["emptyReferrer","historyLength"],["completeness","id","seen"],["keyDown","keyPress","keyUp"],["altKey","ctrlKey","eventType","instanceOfUIEvent","keyCode","markedAsTrusted","metaKey","sequenceNumber","shiftKey","target","timestamp"],["eventType","keyCode","modifierKeys","sequenceNumber","target","timestamp"],["language","languages"],["hash","mathProperties"],["mouseClick","mouseDown","mouseMove","mouseUp"],["button","eventType","instanceOfUIEvent","markedAsTrusted","oX","oY","sequenceNumber","target","timestamp","x","y"],["button","eventType","instanceOfUIEvent","markedAsTrusted","target","timestamp","x","y"],["mouseButtonEvents","mouseMoveEvents"],["button","eventType","sequenceNumber","target","timestamp","x","y"],["recent","throttled"],["eventType","timestamp","x","y"],["argumentsValue","hasArguments","hasGlobal","hasProcess"],["nonce"],["avgAlpha","avgBeta","avgGamma","avgInterval","numOrientationEvents","stdDevAlpha","stdDevBeta","stdDevGamma","stdDevInterval"],["connectStart","domComplete","domContentLoadedEventEnd","domContentLoadedEventStart","domInteractive","domLoading","loadEventEnd","loadEventStart","requestStart","responseEnd","responseStart"],["statuscode","value"],["document","documentBody","external","global","navigator"],["ActiveXObject","ApplePaySession","File","Int8Array","MutationObserver","Notification","PushManager","SharedWorker","TouchEvent","XDomainRequest","_Selenium_IDE_Recorder","__fxdriver_unwrapped","_phantom","addEventListener","attachEvent","awesomium","callPhantom","createPopup","detachEvent","dispatchEvent","domAutomationController","event","external","fireEvent","frames","getComputedStyle","globalStorage","localStorage","mozRTCPeerConnection","mozRequestAnimationFrame","phantom","postMessage","registerProtocolHandler","removeEventListener","requestAnimationFrame","sessionStorage","sidebar","webkitRTCPeerConnection","webkitRequestAnimationFrame","webkitResolveLocalFileSystemURL"],["$cdc_asdjflasutopfhvcZLmcfl_","_Selenium_IDE_Recorder","__fxdriver_unwrapped","__webdriver_script_fn","all","characterSet","charset","compatMode","documentMode","getElementById","getElementsByClassName","hasAttributes","images","layers","querySelector"],["contextMenu","innerHTML","innerText","mozRequestFullScreen","requestFullScreen","webdriver","webkitRequestFullScreen"],["vibrate"],["Sequentum"],["crypto","document","documentBody","external","global","navigator"],["ActiveXObject","ApplePaySession","BluetoothUUID","File","MutationObserver","Notification","PushManager","SharedWorker","TouchEvent","XDomainRequest","_Selenium_IDE_Recorder","__fxdriver_unwrapped","_phantom","attachEvent","callPhantom","createPopup","detachEvent","event","external","fireEvent","frameElement","globalStorage","localStorage","mozRTCPeerConnection","mozRequestAnimationFrame","netscape","phantom","postMessage","registerProtocolHandler","requestAnimationFrame","sessionStorage","sidebar","webkitRTCPeerConnection","webkitRequestAnimationFrame","webkitResolveLocalFileSystemURL"],["$cdc_asdjflasutopfhvcZLmcfl_","_Selenium_IDE_Recorder","__fxdriver_unwrapped","__webdriver_script_fn","all","characterSet","charset","compatMode","documentMode","images","layers"],["contextMenu","innerText","mozRequestFullScreen","requestFullScreen","webkitRequestFullScreen"],["bluetooth","credentials","requestMediaKeySystemAccess","storage","vibrate","webdriver"],["subtle"],["global","locationbar","navigator","operaVersion","screen","toolbar"],["devicePixelRatio","innerHeight","innerWidth","isSecureContext","outerHeight","outerWidth","screenX","screenY"],["availHeight","availWidth","colorDepth","height","pixelDepth","width"],["appCodeName","appName","appVersion","buildID","cpuClass","doNotTrack","hardwareConcurrency","maxTouchPoints","oscpu","platform","product","productSub","userAgent","vendor","vendorSub","webdriver"],["ip","model"],["constructor","lastChance"],["events"],["accuracy","timestamp","x","y","z"],["level","powerSource","status","technology","temp","voltage"],["androidId","board","deviceBrand","deviceModel","deviceModelNumber","hardware","hardwareName","manufacturer","osBuildFingerprint","osBuildNumber","osName","osVersion","product","serial"],["availableRam","availableStorage","totalRam","totalStorage"],["bignox","bluestacks","genymotion","superuser"],["kernelPatch"],["country","currency","language","timezone"],["accuracy","distance","timestamp"],["density","height","width"],["configId","errorArray","kernelId","kernelURI","kernelUpdateHeaderName","lastErrorCount","lastErrorId","lastErrorTimestamp","timeSinceLastRequest"],["jvmVersion","osArch","osName","osVersion"],["timestamp","x","y","z"],["level","status"],["appBundleName","appInstallId","appVersion","cfBundleInfo","deviceBrand","deviceModel","deviceModelNumber","intAppVersion","osType","osVersion","sdkVersion"],["availableStorage","numCores","timestamp","totalRam","uptimeSinceBoot"],["brightness","density","height","width"],["hw.cputype","hw.model","hw.physicalcpu","kern.boottime","kern.hostname","kern.proc","kern.version"],["appdir"],["jailbreak"],["data","mnt","storage"],["eth0","p2p0","wlan0"],["root"],["cpuinfo","date","uname","whoami"],["net.hostname","ro.boot.boottime","ro.build.date.utc","ro.build.fingerprint","ro.runtime.firstboot","serialno"],["afterReady","immediately","lastChance"],["InstallTrigger","controllers"],["status","value"],["bodyAttribute","scriptPresent"],["hash"],["description","message","name","num","stack","stacktrace"],["length","punctuators","whitespace"],["touchEnd","touchMove","touchStart"],["eventType","timestamp","touches"],["oX","oY","x","y"],["x","y"],["3gpp; codecs=\"mp4v.20.8, samr\"","mp2t; codecs=\"avc1.42E01E,mp4a.40.2\"","mp4","mp4; codecs=\"avc1.42c00d\"","mp4; codecs=\"avc1.64001E, mp4a.40.2\"","mp4; codecs=\"mp4v.20.8, mp4a.40.2\"","mp4; codecs=bogus","mp4; codecs=mp4a.40.2","mpeg","ogg; codecs=\"theora, speex\"","ogg; codecs=opus","ogg; codecs=speex","ogg; codecs=theora","wav; codecs=\"0\"","wav; codecs=\"1\"","wav; codecs=\"2\"","wave","wave; codecs=0","wave; codecs=1","wave; codecs=2","webm; codecs=\"vorbis,vp9\"","webm; codecs=\"vp8, vorbis\"","webm; codecs=vorbis","x-mpeg","x-mpegurl"],["events","finalState","initialState","visibilityEventCount"],["timestamp","visible"],["contextProperties","parameters","shaderPrecisions","supportedExtensions"],["antialias","debugInfo","dimensions","maxAnisotropy","params"],["alphaBits","blueBits","depthBits","greenBits","maxCombinedTextureImageUnits","maxCubeMapTextureSize","maxFragmentUniformVectors","maxRenderbufferSize","maxTextureImageUnits","maxTextureSize","maxVaryingVectors","maxVertexAttribs","maxVertexTextureImageUnits","maxVertexUniformVectors","redBits","renderer","shadingLanguageVersion","stencilBits","vendor","version"],["renderer","vendor"],["candidate","ip"],["hasSpeechSynthesis","voiceData"],["hash","match","noOfDefaultVoices","noOfVoices","relLang","relVoiceUri"],["bursts","events"],["errors","signals"]])
         return self.encode(data)
     def getheaders(self):
