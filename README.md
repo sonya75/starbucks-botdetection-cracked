@@ -37,3 +37,6 @@ The ``X-DQ7Hy5L1-`` is a header name prefix which is also hidden in the script b
 ``X-DQ7Hy5L1-b`` is a checksum calculated from the sensor data and the uuid token
 
 The main payload header can be decoded for inspection using the decode function in sensordata.py script. I haven't uploaded a superpack decoder in python yet, but I plan to soon.
+
+
+The graphics drivers list is taken from https://github.com/TimvanScherpenzeel/detect-gpu/blob/master/data/analytics.csv

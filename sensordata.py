@@ -67,6 +67,9 @@ BUNDLE_SEED_KEY="c"
 BUNDLE_ID_KEY="d"
 FIRMWARE_KEY="z"
 PAYLOAD_KEY="a"
+GRAPHICSDRIVER=open('graphicsdrivers.txt','r').read().strip().split("\n")
+GRAPHICSDRIVER=[p.strip() for p in GRAPHICSDRIVER]
+PIXELDATAS=[(1920,1040,937),(2560,1400,1297)]
 class BotDetector:
     def __init__(self):
         self.mousebuttoneventslimit=30
@@ -77,6 +80,7 @@ class BotDetector:
         self.inittime=int(time.time()*1000)
         self.timestamps=[self.inittime+random.randint(40,80),0,random.randint(500,800),random.randint(1000,1500)]
         self.lasteventtime=self.inittime+self.timestamps[2]
+        self.timezonedata=random.choice(["Sun Aug 05 1945 19:16:00 GMT-0400 (Eastern Daylight Time)","Sun Aug 05 1945 13:46:00 GMT-0930 (Hawaii-Aleutian Standard Time)","Sun Aug 05 1945 14:16:00 GMT-0900 (Alaska Daylight Time)","Sun Aug 05 1945 16:16:00 GMT-0700 (Pacific Daylight Time)","Sun Aug 05 1945 18:16:00 GMT-0500 (Central Daylight Time)","Sun Aug 05 1945 20:16:00 GMT-0300 (Atlantic Daylight Time)","Mon Aug 06 1945 02:16:00 GMT+0300 (Central European Summer Time)","Mon Aug 06 1945 03:16:00 GMT+0400 (Gulf Standard Time)","Mon Aug 06 1945 05:46:00 GMT+0630 (India Standard Time)","Mon Aug 06 1945 06:16:00 GMT+0700 (Indochina Time)","Mon Aug 06 1945 08:16:00 GMT+0900 (Singapore Standard Time)","Mon Aug 06 1945 08:16:00 GMT+0900 (Japan Standard Time)"])
         self.bundleseed=None
         self.uuidtoken=None
         self.encryptionseed1=None
@@ -87,6 +91,10 @@ class BotDetector:
         self.plugins=[ -482629523, 916307581, 1078363890 ]
         self.consoleproperties='assert\x00clear\x00context\x00count\x00countReset\x00debug\x00dir\x00dirxml\x00error\x00group\x00groupCollapsed\x00groupEnd\x00info\x00log\x00memory\x00profile\x00profileEnd\x00table\x00time\x00timeEnd\x00timeLog\x00timeStamp\x00trace\x00warn'
         self.fonts=[False,True,False,False,False,False,False,True,False,True,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,True,False,True,False,True,False,False,False,False,False,False,False,False,False,True,True,False,False]
+        #Chinese fonts installed or not
+        if random.randint(0,1)==1:
+            self.fonts[36]=True  #PMingLiU
+            self.fonts[38]=True  #SimHei
         self.mathproperties=['abs','acos','acosh','asin','asinh','atan','atanh','atan2','ceil','cbrt','expm1','clz32','cos','cosh','exp','floor','fround','hypot','imul','log','log1p','log2','log10','max','min','pow','random','round','sign','sin','sinh','sqrt','tan','tanh','trunc','E','LN10','LN2','LOG10E','LOG2E','PI','SQRT1_2','SQRT2']
         self.keyevents=[]
         self.keysequencenumber=0
@@ -99,9 +107,10 @@ class BotDetector:
         self.visibilityevents=[]
         self.mousemoveevents={"recent":[],"throttled":[]}
         self.mousesequencenumber=0
+        pixeldata=random.choice(PIXELDATAS)
         self.mediadeviceids=["communications",os.urandom(32).encode('hex'),"communications",os.urandom(32).encode('hex'),os.urandom(32).encode('hex'),os.urandom(32).encode('hex'),os.urandom(32).encode('hex'),os.urandom(32).encode('hex')]
-        self.browserdata={"global":{"innerHeight":1297,"innerWidth":2560,"outerHeight":1400,"outerWidth":2560,"screenX":0,"screenY":0,"isSecureContext":True,"devicePixelRatio":1},"screen":{"height":1440,"width":2560,"availHeight":1400,"availWidth":2560,"pixelDepth":24,"colorDepth":24},"navigator":{"appCodeName":"Mozilla","appName":"Netscape","appVersion":"5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36","buildID":None,"cpuClass":None,"hardwareConcurrency":24,"maxTouchPoints":0,"platform":"Win32","product":"Gecko","productSub":"20030107","oscpu":None,"userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36","vendor":"Google Inc.","vendorSub":"","doNotTrack":None,"webdriver":False},"operaVersion":None,"toolbar":True,"locationbar":True}
-        self.devicedata={"parameters":{"antialias":True,"maxAnisotropy":16,"dimensions":["11","11024","3276732767"],"params":{"alphaBits":8,"blueBits":8,"greenBits":8,"redBits":8,"depthBits":24,"maxCombinedTextureImageUnits":32,"maxCubeMapTextureSize":16384,"maxFragmentUniformVectors":1024,"maxRenderbufferSize":16384,"maxTextureImageUnits":16,"maxTextureSize":16384,"maxVaryingVectors":30,"maxVertexAttribs":16,"maxVertexTextureImageUnits":16,"maxVertexUniformVectors":4096,"renderer":"WebKit WebGL","shadingLanguageVersion":"WebGL GLSL ES 1.0 (OpenGL ES GLSL ES 1.0 Chromium)","stencilBits":0,"vendor":"WebKit","version":"WebGL 1.0 (OpenGL ES 2.0 Chromium)"},"debugInfo":{"vendor":"Google Inc.","renderer":'ANGLE (Radeon RX Vega Direct3D11 vs_5_0 ps_5_0)'}},"shaderPrecisions":["23127127","23127127","23127127","23127127","23127127","23127127","03130","03130","03130","03130","03130","03130"],"supportedExtensions":["ANGLE_instanced_arrays","EXT_blend_minmax","EXT_color_buffer_half_float","EXT_disjoint_timer_query","EXT_float_blend","EXT_frag_depth","EXT_shader_texture_lod","EXT_texture_filter_anisotropic","WEBKIT_EXT_texture_filter_anisotropic","EXT_sRGB","KHR_parallel_shader_compile","OES_element_index_uint","OES_standard_derivatives","OES_texture_float","OES_texture_float_linear","OES_texture_half_float","OES_texture_half_float_linear","OES_vertex_array_object","WEBGL_color_buffer_float","WEBGL_compressed_texture_s3tc","WEBKIT_WEBGL_compressed_texture_s3tc","WEBGL_compressed_texture_s3tc_srgb","WEBGL_debug_renderer_info","WEBGL_debug_shaders","WEBGL_depth_texture","WEBKIT_WEBGL_depth_texture","WEBGL_draw_buffers","WEBGL_lose_context","WEBKIT_WEBGL_lose_context"],"contextProperties":-368668372}
+        self.browserdata={"global":{"innerHeight":pixeldata[2],"innerWidth":pixeldata[0],"outerHeight":pixeldata[1],"outerWidth":pixeldata[0],"screenX":0,"screenY":0,"isSecureContext":True,"devicePixelRatio":1},"screen":{"height":(pixeldata[1]+40),"width":pixeldata[0],"availHeight":pixeldata[1],"availWidth":pixeldata[1],"pixelDepth":24,"colorDepth":24},"navigator":{"appCodeName":"Mozilla","appName":"Netscape","appVersion":"5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36","buildID":None,"cpuClass":None,"hardwareConcurrency":random.choice([12,24]),"maxTouchPoints":0,"platform":"Win32","product":"Gecko","productSub":"20030107","oscpu":None,"userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36","vendor":"Google Inc.","vendorSub":"","doNotTrack":None,"webdriver":False},"operaVersion":None,"toolbar":True,"locationbar":True}
+        self.devicedata={"parameters":{"antialias":True,"maxAnisotropy":16,"dimensions":["11","11024","3276732767"],"params":{"alphaBits":8,"blueBits":8,"greenBits":8,"redBits":8,"depthBits":24,"maxCombinedTextureImageUnits":32,"maxCubeMapTextureSize":16384,"maxFragmentUniformVectors":1024,"maxRenderbufferSize":16384,"maxTextureImageUnits":16,"maxTextureSize":16384,"maxVaryingVectors":30,"maxVertexAttribs":16,"maxVertexTextureImageUnits":16,"maxVertexUniformVectors":4096,"renderer":"WebKit WebGL","shadingLanguageVersion":"WebGL GLSL ES 1.0 (OpenGL ES GLSL ES 1.0 Chromium)","stencilBits":0,"vendor":"WebKit","version":"WebGL 1.0 (OpenGL ES 2.0 Chromium)"},"debugInfo":{"vendor":"Google Inc.","renderer":random.choice(GRAPHICSDRIVER)}},"shaderPrecisions":["23127127","23127127","23127127","23127127","23127127","23127127","03130","03130","03130","03130","03130","03130"],"supportedExtensions":["ANGLE_instanced_arrays","EXT_blend_minmax","EXT_color_buffer_half_float","EXT_disjoint_timer_query","EXT_float_blend","EXT_frag_depth","EXT_shader_texture_lod","EXT_texture_filter_anisotropic","WEBKIT_EXT_texture_filter_anisotropic","EXT_sRGB","KHR_parallel_shader_compile","OES_element_index_uint","OES_standard_derivatives","OES_texture_float","OES_texture_float_linear","OES_texture_half_float","OES_texture_half_float_linear","OES_vertex_array_object","WEBGL_color_buffer_float","WEBGL_compressed_texture_s3tc","WEBKIT_WEBGL_compressed_texture_s3tc","WEBGL_compressed_texture_s3tc_srgb","WEBGL_debug_renderer_info","WEBGL_debug_shaders","WEBGL_depth_texture","WEBKIT_WEBGL_depth_texture","WEBGL_draw_buffers","WEBGL_lose_context","WEBKIT_WEBGL_lose_context"],"contextProperties":-368668372}
     def processrawscript(self,x):
         funcstr=re.search("function a\(b\)({.*?)\n",x).group(1)
         funcstr=funcstr[:funcstr.rfind("}")]
@@ -257,7 +266,7 @@ class BotDetector:
                     starty+=random.randint(10,50)*movey
                 k-=1
             tl+=random.randint(10,50)
-            if (x-tl)<1000 or random.randint(0,1)==1:
+            if (x-tl)<1000 or random.randint(0,2)==1:
                 self.mousebuttonevents.append({"button":0,"eventType":1,"sequenceNumber":self.mousesequencenumber,"target":{"id":'',"name":'',"nodeType":1,"tagName":'BUTTON' },"timestamp":(tl-self.inittime),"x":startx,"y":starty})
                 tl+=random.randint(100,200)
                 self.mousebuttonevents.append({"button":0,"eventType":2,"sequenceNumber":self.mousesequencenumber,"target":{"id":'',"name":'',"nodeType":1,"tagName":'BUTTON' },"timestamp":(tl-self.inittime),"x":startx,"y":starty})
@@ -287,7 +296,7 @@ class BotDetector:
         signals.append(["13",False]) # checking window.Image
         signals.append(["14",simplehash(self.consoleproperties)]) # checking properties of the object window.console
         signals.append(["15",{"hasToSource":False,"sourceHash":0,"stringHash":simplehash("function createElement() { [native code] }")}]) # hash of document.createElement.toString()
-        signals.append(["21",'Sun Aug 05 1945 19:16:00 GMT-0400 (Eastern Daylight Time)']) # new Date(-770172240000).toString()
+        signals.append(["21",self.timezonedata]) # new Date(-770172240000).toString()
         signals.append(["24",{"fonts":self.fonts,"version":5}])
         signals.append(["25",{"callable":True,"documentElement":True,"exists":True,"falsy":True,"nullish":True,"type":"undefined"}]) # properties of document.documentElement
         signals.append(["29",[True,True,True,True,True,True,True,True,True,True,True,True,True,True,True,True,True,True,True,True]])
